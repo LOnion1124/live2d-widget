@@ -154,7 +154,7 @@ function registerEventListener(tips: Tips) {
     showMessage(text, 4000, 9);
   });
 
-  const devtools = () => {};
+  const devtools = () => { };
   console.log('%c', devtools);
   devtools.toString = () => {
     showMessage(tips.message.console, 6000, 9);
@@ -211,24 +211,56 @@ function initWidget(config: string | Config) {
     return;
   }
   logger.setLevel(config.logLevel);
-  document.body.insertAdjacentHTML(
-    'beforeend',
-    `<div id="waifu-toggle">
-       ${fa_child}
-     </div>`,
-  );
+  const existingToggle = document.getElementById('waifu-toggle');
+  if (existingToggle) {
+    // existingToggle.innerHTML = fa_child;
+    existingToggle.setAttribute('role', 'button');
+    existingToggle.setAttribute('aria-label', 'Toggle waifu');
+    existingToggle.tabIndex = existingToggle.tabIndex || 0;
+  } else {
+    logger.warn('No #waifu-toggle element found. Add a fixed button in your HTML to toggle the widget.');
+  }
   const toggle = document.getElementById('waifu-toggle');
-  toggle?.addEventListener('click', () => {
-    toggle?.classList.remove('waifu-toggle-active');
-    if (toggle?.getAttribute('first-time')) {
-      loadWidget(config as Config);
-      toggle?.removeAttribute('first-time');
-    } else {
-      localStorage.removeItem('waifu-display');
-      document.getElementById('waifu')?.classList.remove('waifu-hidden');
+  toggle?.addEventListener('click', async () => {
+    const waifu = document.getElementById('waifu');
+    if (!waifu) return;
+
+    // Check if waifu is currently visible
+    const isVisible = waifu.classList.contains('waifu-active') && !waifu.classList.contains('waifu-hidden');
+
+    if (isVisible) {
+      // Hide waifu (similar to quit functionality)
+      localStorage.setItem('waifu-display', Date.now().toString());
+
+      // Try to show goodbye message if tips are available
+      if (config.waifuPath) {
+        try {
+          const response = await fetch(config.waifuPath);
+          const tips = await response.json();
+          showMessage(tips.message.goodbye, 2000, 11);
+        } catch (e) {
+          // Silently fail if tips cannot be loaded
+        }
+      }
+
+      waifu.classList.remove('waifu-active');
       setTimeout(() => {
-        document.getElementById('waifu')?.classList.add('waifu-active');
-      }, 0);
+        waifu.classList.add('waifu-hidden');
+        toggle?.classList.add('waifu-toggle-active');
+      }, 3000);
+    } else {
+      // Show waifu
+      toggle?.classList.remove('waifu-toggle-active');
+      if (toggle?.getAttribute('first-time')) {
+        loadWidget(config as Config);
+        toggle?.removeAttribute('first-time');
+      } else {
+        localStorage.removeItem('waifu-display');
+        waifu.classList.remove('waifu-hidden');
+        setTimeout(() => {
+          waifu.classList.add('waifu-active');
+        }, 0);
+      }
     }
   });
   if (

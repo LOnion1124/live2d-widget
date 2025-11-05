@@ -3,7 +3,7 @@ import { loadExternalResource, randomOtherOption } from './utils.js';
 import logger from './logger.js';
 class ModelManager {
     constructor(config, models = []) {
-        var _b;
+        var _a;
         this.modelList = null;
         let { apiPath, cdnPath } = config;
         const { cubism2Path, cubism5Path } = config;
@@ -29,7 +29,7 @@ class ModelManager {
             modelTexturesId = 0;
         }
         if (isNaN(modelId)) {
-            modelId = (_b = config.modelId) !== null && _b !== void 0 ? _b : 0;
+            modelId = (_a = config.modelId) !== null && _a !== void 0 ? _a : 0;
         }
         this.useCDN = useCDN;
         this.cdnPath = cdnPath || '';
@@ -45,28 +45,6 @@ class ModelManager {
     static async initCheck(config, models = []) {
         const model = new ModelManager(config, models);
         if (model.useCDN) {
-            const response = await fetch(`${model.cdnPath}model_list.json`);
-            model.modelList = await response.json();
-            if (model.modelId >= model.modelList.models.length) {
-                model.modelId = 0;
-            }
-            const modelName = model.modelList.models[model.modelId];
-            if (Array.isArray(modelName)) {
-                if (model.modelTexturesId >= modelName.length) {
-                    model.modelTexturesId = 0;
-                }
-            }
-            else {
-                const modelSettingPath = `${model.cdnPath}model/${modelName}/index.json`;
-                const modelSetting = await model.fetchWithCache(modelSettingPath);
-                const version = model.checkModelVersion(modelSetting);
-                if (version === 2) {
-                    const textureCache = await model.loadTextureCache(modelName);
-                    if (model.modelTexturesId >= textureCache.length) {
-                        model.modelTexturesId = 0;
-                    }
-                }
-            }
         }
         else {
             if (model.modelId >= model.models.length) {
@@ -105,7 +83,7 @@ class ModelManager {
                 const response = await fetch(url);
                 result = await response.json();
             }
-            catch (_b) {
+            catch (_a) {
                 result = null;
             }
             this.modelJSONCache[url] = result;
@@ -148,25 +126,6 @@ class ModelManager {
                 }
             }
             else {
-                if (!this.cubism5Path) {
-                    logger.error('No cubism5Path set, cannot load Cubism 5 Core.');
-                    return;
-                }
-                await loadExternalResource(this.cubism5Path, 'js');
-                const { AppDelegate: Cubism5Model } = await import('./cubism5/index.js');
-                this.cubism5model = new Cubism5Model();
-                if (this.currentModelVersion === 2) {
-                    this.cubism2model.destroy();
-                    this.resetCanvas();
-                }
-                if (this.currentModelVersion === 2 || !this.cubism5model.subdelegates.at(0)) {
-                    this.cubism5model.initialize();
-                    this.cubism5model.changeModel(modelSettingPath);
-                    this.cubism5model.run();
-                }
-                else {
-                    this.cubism5model.changeModel(modelSettingPath);
-                }
             }
             logger.info(`Model ${modelSettingPath} (Cubism version ${version}) loaded`);
             this.currentModelVersion = version;
@@ -183,22 +142,6 @@ class ModelManager {
     async loadModel(message) {
         let modelSettingPath, modelSetting;
         if (this.useCDN) {
-            let modelName = this.modelList.models[this.modelId];
-            if (Array.isArray(modelName)) {
-                modelName = modelName[this.modelTexturesId];
-            }
-            modelSettingPath = `${this.cdnPath}model/${modelName}/index.json`;
-            modelSetting = await this.fetchWithCache(modelSettingPath);
-            const version = this.checkModelVersion(modelSetting);
-            if (version === 2) {
-                const textureCache = await this.loadTextureCache(modelName);
-                if (textureCache.length > 0) {
-                    let textures = textureCache[this.modelTexturesId];
-                    if (typeof textures === 'string')
-                        textures = [textures];
-                    modelSetting.textures = textures;
-                }
-            }
         }
         else {
             modelSettingPath = this.models[this.modelId].paths[this.modelTexturesId];
@@ -211,27 +154,6 @@ class ModelManager {
         const { modelId } = this;
         let noTextureAvailable = false;
         if (this.useCDN) {
-            const modelName = this.modelList.models[modelId];
-            if (Array.isArray(modelName)) {
-                this.modelTexturesId = randomOtherOption(modelName.length, this.modelTexturesId);
-            }
-            else {
-                const modelSettingPath = `${this.cdnPath}model/${modelName}/index.json`;
-                const modelSetting = await this.fetchWithCache(modelSettingPath);
-                const version = this.checkModelVersion(modelSetting);
-                if (version === 2) {
-                    const textureCache = await this.loadTextureCache(modelName);
-                    if (textureCache.length <= 1) {
-                        noTextureAvailable = true;
-                    }
-                    else {
-                        this.modelTexturesId = randomOtherOption(textureCache.length, this.modelTexturesId);
-                    }
-                }
-                else {
-                    noTextureAvailable = true;
-                }
-            }
         }
         else {
             if (this.models[modelId].paths.length === 1) {
