@@ -175,10 +175,19 @@ function registerEventListener(tips: Tips) {
 async function loadWidget(config: Config) {
   localStorage.removeItem('waifu-display');
   sessionStorage.removeItem('waifu-message-priority');
+  // document.body.insertAdjacentHTML(
+  //   'beforeend',
+  //   `<div id="waifu">
+  //      <div id="waifu-tips"></div>
+  //      <div id="waifu-canvas">
+  //        <canvas id="live2d" width="800" height="800"></canvas>
+  //      </div>
+  //      <div id="waifu-tool"></div>
+  //    </div>`,
+  // );
   document.body.insertAdjacentHTML(
     'beforeend',
     `<div id="waifu">
-       <div id="waifu-tips"></div>
        <div id="waifu-canvas">
          <canvas id="live2d" width="800" height="800"></canvas>
        </div>

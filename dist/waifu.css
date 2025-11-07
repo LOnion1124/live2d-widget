@@ -47,7 +47,7 @@
 	transform: translateY(20px);
 } */
 
-#waifu-tips {
+/* #waifu-tips {
 	animation: waifu-shake 50s ease-in-out 5s infinite;
 	background-color: rgba(236, 217, 188, .5);
 	border: 1px solid rgba(224, 186, 140, .62);
@@ -74,7 +74,7 @@
 
 #waifu-tips span {
 	color: #0099cc;
-}
+} */
 
 #live2d {
 	cursor: grab;
